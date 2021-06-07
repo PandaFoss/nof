@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+###################### START CONFIGURATION
+
+# Directory where I store the backup
+BACKUP_DIR="${HOME}/.backup"
+
+# Backup filename
+BACKUP_FILE="backup.tar.gz"
+
+# Backup filename ID
+BACKUP_ID="$(date +%d%m%Y)"
+
+# Directory where I store the snapshot
+#SNAPSHOT_DIR="${BACKUP_DIR}"
+
+# Snapshot filename
+#SNAPTSHOT_FILE="snapshot"
+
+# Array of directories to be backed up
+DIR_LIST=( "${HOME}/Universidad"
+	  "${HOME}/Proyectos"
+	  "${HOME}/Vídeos"
+	  "${HOME}/Documentos"
+	  "${HOME}/Imágenes"
+	  "${HOME}/.keepass"
+	  "${HOME}/.config"
+	  "${HOME}/.gnupg"
+	  "${HOME}/.ssh"
+	  "${HOME}/.zshrc"
+	  "${HOME}/.tmux.conf"
+)
+
+# Exclude files matching EXCLUDE_PATTERN
+EXCLUDE_PATTERN=( '"Captura de pantalla*"' )
+
+#### SSH Options [OpenSSH required]
+# Enable SHH option [true/false]
+ENABLE_SSH='false'
+
+# Remote host [eg: 192.168.0.100]
+REMOTE_HOST='192.168.0.XXX'
+
+# Remote user
+REMOTE_USER='username'
+
+# Remote directory
+REMOTE_DEST="/my/remote/dir"
+####
+
+###################### END CONFIGURATION
+
+# Verify the existence of the directories and create them if they do not exist
+[ ! -d "${BACKUP_DIR}" ] && mkdir "${BACKUP_DIR}"
+#[ ! -d "${SNAPSHOT_DIR}" ] && mkdir "${SNAPSHOT_DIR}"
+
+# Create exclude flag
+if [ "${EXCLUDE_PATTERN}" ]; then
+	for pattern in "${EXCLUDE_PATTERN[@]}"; do
+		exclude_this+="--exclude=${pattern} "
+	done
+fi
+
+# Create backup
+eval tar --create --gzip --verbose --verify "${exclude_this}" --file "${BACKUP_DIR}/${BACKUP_ID}-${BACKUP_FILE}" "${DIR_LIST[@]}"
+
+# Send via SSH
+if [ "${ENABLE_SSH}" == 'true' ]; then
+	scp "${BACKUP_DIR}/${BACKUP_ID}-${BACKUP_FILE}" "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DEST}"
+fi
+
+# Rotation
+count_backups="$(ls "${BACKUP_DIR}" | grep "${BACKUP_FILE}" | wc -l)"
+if [ "${count_backups}" -eq 6 ]; then
+	older_backup="$(ls --sort=time --format=single-column -r "${BACKUP_DIR}" | head -n1)"
+	rm "${BACKUP_DIR}/${older_backup}"
+fi
