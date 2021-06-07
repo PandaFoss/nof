@@ -3,7 +3,7 @@ Personal script to create backup
 
 ___
 
-[🇺🇸 Switch to English](README.en)
+[🇺🇸 Switch to English](README_en.md)
 
 **¿Alguna vez cometiste un error con los datos dentro de un disco y te valió que tus amigos te digan "F"?** Bueno, a mi sí, y por eso decidí crear éste script. Ahora puedo gritarles en la cara "NO MÁS F". O eso espero.
 
